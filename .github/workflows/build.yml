@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,9 +22,31 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk PhoneOptimizer.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: PhoneOptimizer-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: PhoneOptimizer.apk
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Оптимизатор телефона
+          prerelease: false
+          files: PhoneOptimizer.apk
+          body: |
+            ## Оптимизатор телефона
+
+            Android-приложение для ускорения и очистки телефона (Kotlin + Jetpack Compose).
+
+            **Разделы:** здоровье телефона, очистка мусора, ускорение (ОЗУ),
+            батарея, управление приложениями. Интерфейс на русском,
+            приложение не выходит в интернет.
+
+            _Прямая ссылка на APK:_ releases/download/latest/PhoneOptimizer.apk
